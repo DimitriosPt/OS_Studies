@@ -60,6 +60,22 @@ int main(int argc, char* argv[])
 	randSeed = atoi(argv[3]);
 	
 	// Write code to check the validity of the command-line arguments
+	if(bufSize < 2)
+	{
+		fprintf(stderr, "Insufficient buffer size, must be at least 2\n");
+		exit(1);
+	}
+	
+	if(itemCnt < 0)
+	{
+		fprintf(stderr, "itemCnt cannot be negative, exiting\n");
+		exit(1);
+	}
+	if(randSeed < 0)
+	{
+		fprintf(stderr, "Invalid Seed\n");
+		exit(1);
+	}
 
     // Function that creates a shared memory segment and initializes its header
     InitShm(bufSize, itemCnt);        
@@ -90,33 +106,38 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-
 void InitShm(int bufSize, int itemCnt)
 {
-    int in = 0;
-    int out = 0;
-	const char *name = "OS_HW1_yourName"; // Name of shared memory object to be passed to shm_open
-
-     // Write code here to create a shared memory block and map it to gShmPtr
-	 // Use the above name.
-	 // **Extremely Important: map the shared memory block for both reading and writing 
-	 // Use PROT_READ | PROT_WRITE
+	int in = 0;
+	int out = 0;
+	int shared_mem;
+	const char *name = "OS_HW1_DimitriosP"; // Name of shared memory object to be passed to shm_open
 	
+	// Write code here to create a shared memory block and map it to gShmPtr
+	// Use the above name.
+	// **Extremely Important: map the shared memory block for both reading and writing 
+	// Use PROT_READ | PROT_WRITE
+	shared_mem = shm_open(name, O_CREAT | O_RDWR, 0666);
+	gShmPtr = mmap(0, bufSize, PROT_READ | PROT_WRITE, MAP_SHARED,  shared_mem, 0);
 	// Write code here to set the values of the four integers in the header
-    // Just call the functions provided below, like this
-    SetBufSize(bufSize); 	
-       
-	   
+	// Just call the functions provided below, like this
+	SetBufSize(bufSize);
+	SetItemCnt(itemCnt);
+	SetIn(in);
+	SetOut(out);
 }
 
 void Producer(int bufSize, int itemCnt, int randSeed)
 {
     int in = 0;
     int out = 0;
-        
-    srand(randSeed);
-
-    // Write code here to produce itemCnt integer values in the range [0-3000]
+    int i = 0;
+    in = GetIn();
+	out = GetOut();
+	int item = 0;
+	srand(randSeed);
+	
+	// Write code here to produce itemCnt integer values in the range [0-3000]
     // Use the functions provided below to get/set the values of shared variables "in" and "out"
     // Use the provided function WriteAtBufIndex() to write into the bounded buffer 	
 	// Use the provided function GetRand() to generate a random number in the specified range
@@ -124,11 +145,22 @@ void Producer(int bufSize, int itemCnt, int randSeed)
 	// Use the following print statement to report the production of an item:
 	// printf("Producing Item %d with value %d at Index %d\n", i, val, in);
 	// where i is the item number, val is the item value, in is its index in the bounded buffer
-    	
-	
-	
-	
-    
+	if(itemCnt != 0)
+	{
+		do
+		{
+			item = GetRand(0, 3000);
+			WriteAtBufIndex(in, item);
+			printf("Producing Item %d with value %d at Index %d\n", i, item, in);
+			itemCnt--;
+			i++;
+			in++;
+			SetIn(in);
+			SetItemCnt(itemCnt);
+		}    
+	    while((in != ((out- 1) % 4)) & (itemCnt != 0));	
+	}
+
 	printf("Producer Completed\n");
 }
 

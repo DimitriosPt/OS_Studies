@@ -38,36 +38,50 @@ int ReadAtBufIndex(int);
 
 int main()
 {
-	const char *name = "OS_HW1_yourName"; // Name of shared memory block to be passed to shm_open
+	const char *name = "OS_HW1_DimitriosP"; // Name of shared memory block to be passed to shm_open
 	int bufSize; // Bounded buffer size
     int itemCnt; // Number of items to be consumed
     int in; // Index of next item to produce
     int out; // Index of next item to consume
-     
-     // Write code here to create a shared memory block and map it to gShmPtr
-	 // Use the above name
-	 // **Extremely Important: map the shared memory block for both reading and writing 
-	 // Use PROT_READ | PROT_WRITE
+    int shared_mem;
+    int i = 0;
 
-
+	// Write code here to create a shared memory block and map it to gShmPtr
+	// Use the above name
+	// **Extremely Important: map the shared memory block for both reading and writing 
+	// Use PROT_READ | PROT_WRITE
+	shared_mem = shm_open(name, PROT_READ | PROT_WRITE, 0666);
+	gShmPtr = mmap(0, bufSize, PROT_READ | PROT_WRITE, MAP_SHARED, shared_mem, 0);
+	
 
 	// Write code here to read the four integers from the header of the shared memory block 
 	// These are: bufSize, itemCnt, in, out
 	// Just call the functions provided below like this:
     bufSize = GetBufSize();
+    itemCnt = GetItemCnt();
+    in = GetIn();
+    out = GetOut();
 	
-	// Write code here to check that the consumer has read the right values: 
- 	printf("Consumer reading: bufSize = %d\n",bufSize);
-
+	// Write code here to check that the consumer has read the right values:
+	
+ 	printf("Consumer reading: bufSize = %d\n", bufSize);
+	
+	
 	// Write code here to consume all the items produced by the producer
     // Use the functions provided below to get/set the values of shared variables in, out, bufSize
     // Use the provided function ReadAtBufIndex() to read from the bounded buffer 	
     // **Extremely Important: Remember to set the value of any shared variable you change locally
 	// Use the following print statement to report the consumption of an item:
-	// printf("Consuming Item %d with value %d at Index %d\n", i, val, out);
+	// 
 	// where i is the item number, val is the item value, out is its index in the bounded buffer
-                
-          
+	while(out != in)
+	{
+		printf("Consuming Item %d with value %d at Index %d\n", i, ReadAtBufIndex(out), out);
+		out++;
+		SetOut(out);
+		i++;
+	}
+                         
 	// remove the shared memory segment 
 	if (shm_unlink(name) == -1) {
 		printf("Error removing %s\n",name);
