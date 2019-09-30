@@ -75,10 +75,12 @@ int main()
 	// Use the following print statement to report the consumption of an item:
 	// 
 	// where i is the item number, val is the item value, out is its index in the bounded buffer
-	while(out != in)
+	while(true)
 	{
+		while(in == out);
+		
 		printf("Consuming Item %d with value %d at Index %d\n", i, ReadAtBufIndex(out), out);
-		out++;
+		out = (out + 1) % bufSize;
 		SetOut(out);
 		i++;
 	}

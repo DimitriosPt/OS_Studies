@@ -119,6 +119,7 @@ void InitShm(int bufSize, int itemCnt)
 	// Use PROT_READ | PROT_WRITE
 	shared_mem = shm_open(name, O_CREAT | O_RDWR, 0666);
 	gShmPtr = mmap(0, bufSize, PROT_READ | PROT_WRITE, MAP_SHARED,  shared_mem, 0);
+	
 	// Write code here to set the values of the four integers in the header
 	// Just call the functions provided below, like this
 	SetBufSize(bufSize);
@@ -145,20 +146,19 @@ void Producer(int bufSize, int itemCnt, int randSeed)
 	// Use the following print statement to report the production of an item:
 	// printf("Producing Item %d with value %d at Index %d\n", i, val, in);
 	// where i is the item number, val is the item value, in is its index in the bounded buffer
-	if(itemCnt != 0)
+	while(true)
 	{
-		do
-		{
-			item = GetRand(0, 3000);
-			WriteAtBufIndex(in, item);
-			printf("Producing Item %d with value %d at Index %d\n", i, item, in);
-			itemCnt--;
-			i++;
-			in++;
-			SetIn(in);
-			SetItemCnt(itemCnt);
-		}    
-	    while((in != ((out- 1) % 4)) & (itemCnt != 0));	
+		item = GetRand(0, 3000);
+		while((((in + 1) % bufSize) == out));
+		WriteAtBufIndex(in, item);
+		printf("Producing Item %d with value %d at Index %d\n", i, item, in);
+		
+		itemCnt--;
+		i = (i + 1) % bufSize);
+		in++;
+		
+		SetIn(in);
+		SetItemCnt(itemCnt);
 	}
 
 	printf("Producer Completed\n");
