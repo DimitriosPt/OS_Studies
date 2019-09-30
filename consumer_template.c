@@ -50,9 +50,9 @@ int main()
 	// Use the above name
 	// **Extremely Important: map the shared memory block for both reading and writing 
 	// Use PROT_READ | PROT_WRITE
-	shared_mem = shm_open(name, PROT_READ | PROT_WRITE, 0666);
-	gShmPtr = mmap(0, bufSize, PROT_READ | PROT_WRITE, MAP_SHARED, shared_mem, 0);
-	
+	shared_mem = shm_open(name, O_CREAT | O_RDWR, 0666);
+	ftruncate(shared_mem, SHM_SIZE);
+	gShmPtr = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,  shared_mem, 0);
 
 	// Write code here to read the four integers from the header of the shared memory block 
 	// These are: bufSize, itemCnt, in, out
@@ -75,9 +75,9 @@ int main()
 	// Use the following print statement to report the consumption of an item:
 	// 
 	// where i is the item number, val is the item value, out is its index in the bounded buffer
-	while(true)
+	while(i <= itemCnt)
 	{
-		while(in == out);
+		while(GetIn() == out);
 		
 		printf("Consuming Item %d with value %d at Index %d\n", i, ReadAtBufIndex(out), out);
 		out = (out + 1) % bufSize;

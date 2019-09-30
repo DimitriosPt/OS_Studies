@@ -2,9 +2,9 @@
 CSC139 
 Fall 2019
 First Assignment
-Last Name, First Name
-Section #
-OSs Tested on: such as Linux, Mac, etc.
+Papageorgacopoulos, Dimitrios
+Section #02
+OSs Tested on: such as Linux
 */
 
 #include <stdio.h>
@@ -59,11 +59,15 @@ int main(int argc, char* argv[])
 	itemCnt = atoi(argv[2]);
 	randSeed = atoi(argv[3]);
 	
-	// Write code to check the validity of the command-line arguments
+	//checks the validity of the command-line arguments
 	if(bufSize < 2)
 	{
 		fprintf(stderr, "Insufficient buffer size, must be at least 2\n");
 		exit(1);
+	}
+	if(bufSize > 1000)
+	{
+		fprintf(stderr, "Buffer size too large, must be at less than 1000");
 	}
 	
 	if(itemCnt < 0)
@@ -82,7 +86,6 @@ int main(int argc, char* argv[])
 
 	/* fork a child process */ 
 	pid = fork();
-
 	if (pid < 0) { /* error occurred */
 		fprintf(stderr, "Fork Failed\n");
 		exit(1);
@@ -118,7 +121,8 @@ void InitShm(int bufSize, int itemCnt)
 	// **Extremely Important: map the shared memory block for both reading and writing 
 	// Use PROT_READ | PROT_WRITE
 	shared_mem = shm_open(name, O_CREAT | O_RDWR, 0666);
-	gShmPtr = mmap(0, bufSize, PROT_READ | PROT_WRITE, MAP_SHARED,  shared_mem, 0);
+	ftruncate(shared_mem, SHM_SIZE);
+	gShmPtr = mmap(0, SHM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,  shared_mem, 0);
 	
 	// Write code here to set the values of the four integers in the header
 	// Just call the functions provided below, like this
@@ -138,27 +142,17 @@ void Producer(int bufSize, int itemCnt, int randSeed)
 	int item = 0;
 	srand(randSeed);
 	
-	// Write code here to produce itemCnt integer values in the range [0-3000]
-    // Use the functions provided below to get/set the values of shared variables "in" and "out"
-    // Use the provided function WriteAtBufIndex() to write into the bounded buffer 	
-	// Use the provided function GetRand() to generate a random number in the specified range
-    // **Extremely Important: Remember to set the value of any shared variable you change locally
-	// Use the following print statement to report the production of an item:
-	// printf("Producing Item %d with value %d at Index %d\n", i, val, in);
-	// where i is the item number, val is the item value, in is its index in the bounded buffer
-	while(true)
+	while(i <= itemCnt)
 	{
 		item = GetRand(0, 3000);
-		while((((in + 1) % bufSize) == out));
-		WriteAtBufIndex(in, item);
+		while(((in + 1) % bufSize) == GetOut());
+	
 		printf("Producing Item %d with value %d at Index %d\n", i, item, in);
+		WriteAtBufIndex(in, item);
 		
-		itemCnt--;
-		i = (i + 1) % bufSize);
-		in++;
-		
+		in = ((in + 1) % bufSize);
+		i++;
 		SetIn(in);
-		SetItemCnt(itemCnt);
 	}
 
 	printf("Producer Completed\n");
